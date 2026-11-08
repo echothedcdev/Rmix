@@ -22,7 +22,7 @@
 </head>
 <body>
   <main class="wrap">
-    <header><div class="brand"><div class="logo">♫</div>RMIX</div><div class="pill">EARLY BUILD · DEMO MODE</div></header>
+    <header><div class="brand"><div class="logo">♫</div>RMIX</div><div class="pill">EARLY BUILD · NIGHTBOT BACKEND</div></header>
     <section class="hero"><div class="eyebrow">Your stream. Your soundtrack.</div><h1>Let chat pick<br><span class="gradient">what plays next.</span></h1><p>RMIX is the music queue bridge for your stream — built around Nightbot requests and a Lightstream browser player.</p></section>
     <section class="grid">
       <div>
@@ -42,10 +42,10 @@
         <section class="panel">
           <div class="panel-head"><h2>Connections</h2><span class="pill">NOT CONNECTED</span></div>
           <div class="connect-list">
-            <div class="connect"><div class="connect-icon">N</div><div class="connect-copy"><strong>Nightbot</strong><span>Song request queue connection</span></div><button class="small-btn" type="button" data-info="Nightbot OAuth connection will be added with the secure backend.">Soon</button></div>
+            <div class="connect"><div class="connect-icon">N</div><div class="connect-copy"><strong>Nightbot</strong><span>Song request queue connection</span></div><button class="small-btn" id="connectNightbot" type="button">Connect</button></div>
             <div class="connect"><div class="connect-icon">L</div><div class="connect-copy"><strong>Lightstream</strong><span>Browser source player</span></div><button class="small-btn" type="button" data-info="Lightstream player setup will be added after browser-source support is verified.">Soon</button></div>
           </div>
-          <div class="notice"><strong>Demo mode:</strong> queue controls work locally in this page. No accounts are connected and no music audio is streamed yet.</div>
+          <div class="notice"><strong>Playback status:</strong> RMIX can securely connect to Nightbot and read its song queue. Lightstream audio playback is still being built.</div>
         </section>
         <section class="panel" style="margin-top:18px">
           <div class="panel-head"><h2>How RMIX works</h2></div>
