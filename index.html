@@ -48,6 +48,24 @@
           <div class="notice"><strong>Playback status:</strong> RMIX can securely connect to Nightbot and read its song queue. Lightstream audio playback is still being built.</div>
         </section>
         <section class="panel" style="margin-top:18px">
+          <div class="panel-head"><h2>RMIX account</h2><span class="pill" id="authStatus">SIGNED OUT</span></div>
+          <form id="authForm" style="display:grid;gap:9px">
+            <input id="authEmail" type="email" placeholder="Email address" autocomplete="email" required style="background:#100d15;border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text)">
+            <input id="authPassword" type="password" placeholder="Password (at least 8 characters)" autocomplete="current-password" minlength="8" required style="background:#100d15;border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text)">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="small-btn" type="submit" id="signInBtn">Sign in</button>
+              <button class="small-btn" type="button" id="signUpBtn">Create account</button>
+              <button class="small-btn" type="button" id="signOutBtn" hidden>Sign out</button>
+            </div>
+          </form>
+          <div class="notice" id="accountMessage" role="status">Create an RMIX account or sign in to connect Nightbot.</div>
+        </section>
+        <section class="panel" style="margin-top:18px">
+          <div class="panel-head"><h2>Nightbot live queue</h2><button class="small-btn" id="refreshLiveQueue" type="button">Refresh</button></div>
+          <div class="sub" id="liveCurrent">Sign in and connect Nightbot to load your queue.</div>
+          <div class="queue-list" id="liveQueue" style="margin-top:12px"></div>
+        </section>
+        <section class="panel" style="margin-top:18px">
           <div class="panel-head"><h2>How RMIX works</h2></div>
           <div class="sub" style="line-height:1.9">01 · A viewer requests a song in Twitch chat.<br>02 · Nightbot provides the request queue.<br>03 · RMIX manages the queue and player.<br>04 · Lightstream captures the browser player.</div>
         </section>
@@ -55,6 +73,7 @@
     </section>
     <div class="footer">RMIX · An independent project by Ecion Co. · Music playback requires appropriate streaming rights.</div>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1"></script>
   <script>
     const queue = [];
     let current = null, playing = false;
@@ -84,6 +103,74 @@
     $('volume').addEventListener('input',e=>$('volumeValue').textContent=e.target.value+'%');
     document.querySelectorAll('[data-info]').forEach(btn=>btn.addEventListener('click',()=>alert(btn.dataset.info)));
     render();
+
+    const SUPABASE_URL = "https://auyaicguvjjkipdcppgm.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_NkoYkbKMtPQprc2KoHdQ2g_UoZDwuKI";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const accountMessage = $('accountMessage');
+    function message(text){ accountMessage.textContent = text; }
+    async function refreshAuth(){
+      const {data:{session}} = await sb.auth.getSession();
+      const signedIn = !!session;
+      $('authStatus').textContent = signedIn ? 'SIGNED IN' : 'SIGNED OUT';
+      $('signOutBtn').hidden = !signedIn;
+      $('signInBtn').hidden = signedIn;
+      $('signUpBtn').hidden = signedIn;
+      $('authEmail').disabled = signedIn;
+      $('authPassword').disabled = signedIn;
+      return session;
+    }
+    $('authForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const email=$('authEmail').value.trim(), password=$('authPassword').value;
+      const {error}=await sb.auth.signInWithPassword({email,password});
+      message(error ? error.message : 'Signed in successfully.');
+      await refreshAuth();
+    });
+    $('signUpBtn').addEventListener('click', async ()=>{
+      const email=$('authEmail').value.trim(), password=$('authPassword').value;
+      if(!email || password.length<8){message('Enter an email and a password with at least 8 characters.');return;}
+      const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:location.href.split('?')[0]}});
+      message(error ? error.message : (data.session ? 'Account created and signed in.' : 'Check your email to confirm your RMIX account.'));
+      await refreshAuth();
+    });
+    $('signOutBtn').addEventListener('click', async ()=>{
+      await sb.auth.signOut(); message('Signed out.'); await refreshAuth();
+    });
+    $('connectNightbot').addEventListener('click', async ()=>{
+      const session=await refreshAuth();
+      if(!session){message('Sign in to RMIX first.');return;}
+      message('Opening Nightbot authorization…');
+      const {data,error}=await sb.functions.invoke('nightbot-connect');
+      if(error || !data?.url){message(data?.error || error?.message || 'Could not start Nightbot connection.');return;}
+      location.href=data.url;
+    });
+    async function loadLiveQueue(){
+      const session=await refreshAuth();
+      if(!session){$('liveCurrent').textContent='Sign in and connect Nightbot to load your queue.';return;}
+      $('liveCurrent').textContent='Loading Nightbot queue…';
+      const {data,error}=await sb.functions.invoke('nightbot-queue');
+      if(error || data?.error){$('liveCurrent').textContent=data?.error || error?.message || 'Queue could not be loaded.';return;}
+      const current=data.currentSong?.track;
+      $('liveCurrent').textContent=current ? 'Now playing: '+current.title+' — '+(current.artist||'') : 'No current song reported by Nightbot.';
+      const list=$('liveQueue'); list.innerHTML='';
+      (data.queue||[]).forEach((item,i)=>{
+        const row=document.createElement('div'); row.className='queue-item';
+        const n=document.createElement('span'); n.className='num'; n.textContent=String(i+1).padStart(2,'0');
+        const copy=document.createElement('div'); copy.className='qcopy';
+        const title=document.createElement('strong'); title.textContent=item.track?.title||'Untitled track';
+        const detail=document.createElement('span'); detail.textContent=(item.track?.artist||item.track?.provider||'Track')+' · requested by '+(item.user?.displayName||'viewer');
+        copy.append(title,detail); row.append(n,copy); list.append(row);
+      });
+      if(!data.queue?.length){const empty=document.createElement('div');empty.className='sub';empty.textContent='No upcoming requests.';list.append(empty);}
+      message('Nightbot queue synced.');
+    }
+    $('refreshLiveQueue').addEventListener('click',loadLiveQueue);
+    sb.auth.onAuthStateChange(()=>{refreshAuth();});
+    refreshAuth();
+    const params=new URLSearchParams(location.search);
+    if(params.get('nightbot')==='connected'){message('Nightbot connected!');history.replaceState({},'',location.pathname);loadLiveQueue();}
+    else if(params.get('nightbot')==='error'){message('Nightbot connection did not finish: '+(params.get('reason')||'unknown error'));history.replaceState({},'',location.pathname);}
   </script>
 </body>
 </html>
