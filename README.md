@@ -1,33 +1,29 @@
 # RMIX
 
-RMIX is a web project designed to bridge Nightbot song requests with a browser-based player for a Lightstream stream setup.
+RMIX is a separate project from Ecion. It connects a streamer's Nightbot song-request queue to a Lightstream browser-source player.
 
-## Current status
+## Status
 
-The first commit contains a responsive frontend prototype:
-- Dark purple/red RMIX interface
-- Local demo request queue
-- Demo play/pause/next/previous controls
-- Volume UI
-- Nightbot and Lightstream connection placeholders
+- [x] RMIX Supabase project created in US East (Ohio)
+- [x] Secure database foundation and Row Level Security
+- [x] Nightbot OAuth start/callback functions deployed
+- [x] Nightbot live queue reader deployed
+- [x] RMIX account and queue UI added to the website
+- [ ] Nightbot OAuth app secrets configured by project owner
+- [ ] Complete end-to-end Nightbot authorization test
+- [ ] Lightstream player and audio playback
+- [ ] Browser-source test in a real Lightstream broadcast
 
-**This is a UI demo only.** It does not connect to Nightbot or Lightstream, retrieve real requests, or stream audio yet.
+## Links
 
-## Planned architecture
+- Website: https://echothedcdev.github.io/Rmix/
+- Repository: https://github.com/echothedcdev/Rmix
+- Setup instructions: [SETUP.md](./SETUP.md)
 
-- **Frontend:** static HTML/CSS/JavaScript hosted with GitHub Pages
-- **Backend:** Supabase Edge Functions for OAuth callbacks and private API operations
-- **Nightbot:** official OAuth/API integration, subject to confirming queue access and available fields
-- **Lightstream:** browser-source player, subject to confirming supported audio playback and autoplay behavior
+## Security
 
-Never put OAuth client secrets, service-role keys, or other private credentials in GitHub Pages/frontend code. Use official OAuth flows and server-side secret storage.
+Nightbot access and refresh tokens are encrypted server-side. Private connection data is not readable from the public browser client. Never commit client secrets, encryption keys, Supabase secret keys, or service-role keys to this repository.
 
-## Local preview
+## Music rights
 
-Open `index.html` in a browser. The queue demo runs locally in the page.
-
-## GitHub Pages
-
-After enabling Pages for the `main` branch and root folder, the site should be published at:
-
-https://echothedcdev.github.io/Rmix/
+Only stream audio you have permission to broadcast. RMIX does not bypass platform restrictions or copyright rules.
