@@ -166,7 +166,15 @@
       message('Nightbot queue synced.');
     }
     $('refreshLiveQueue').addEventListener('click',loadLiveQueue);
-    sb.auth.onAuthStateChange(()=>{refreshAuth();});
+    sb.auth.onAuthStateChange((_event,session)=>{
+      const signedIn=!!session;
+      $('authStatus').textContent=signedIn?'SIGNED IN':'SIGNED OUT';
+      $('signOutBtn').hidden=!signedIn;
+      $('signInBtn').hidden=signedIn;
+      $('signUpBtn').hidden=signedIn;
+      $('authEmail').disabled=signedIn;
+      $('authPassword').disabled=signedIn;
+    });
     refreshAuth();
     const params=new URLSearchParams(location.search);
     if(params.get('nightbot')==='connected'){message('Nightbot connected!');history.replaceState({},'',location.pathname);loadLiveQueue();}
